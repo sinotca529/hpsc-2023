@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <cmath>
 #include <immintrin.h>
+#include <string.h>
+#include <algorithm>
 
 // #define DEBUG
 
@@ -39,12 +41,22 @@ int main() {
     __m256 fy_acc = _mm256_setzero_ps();
 
     for(int j=0; j<N; j+=STRIDE) {
+      __m256i load_mask;
+      {
+        int mask[STRIDE] = {};
+        int first_invalid_idx = std::min(N - j, STRIDE);
+        memset(mask, -1, first_invalid_idx * sizeof(float));
+        load_mask = _mm256_load_si256((__m256i*)mask);
+      }
+
       __m256 rx, ry;
       {
         __m256 xi = _mm256_set1_ps(x[i]);
         __m256 yi = _mm256_set1_ps(y[i]);
-        __m256 xj = _mm256_load_ps(x + j);
-        __m256 yj = _mm256_load_ps(y + j);
+        __m256 xj = _mm256_maskload_ps(x + j, load_mask);
+        dump("        xj : ", xj);
+        __m256 yj = _mm256_maskload_ps(y + j, load_mask);
+        dump("        yj : ", yj);
         rx = _mm256_sub_ps(xi, xj);
         ry = _mm256_sub_ps(yi, yj);
       }
@@ -78,7 +90,9 @@ int main() {
 
       __m256 rx_mj_rm3_masked, ry_mj_rm3_masked;
       {
-        __m256 mj = _mm256_load_ps(m + j);
+        __m256 mj = _mm256_maskload_ps(m + j, load_mask);
+        dump("        mj : ", mj);
+
         __m256 rx_mj = _mm256_mul_ps(rx, mj);
         __m256 ry_mj = _mm256_mul_ps(ry, mj);
 
