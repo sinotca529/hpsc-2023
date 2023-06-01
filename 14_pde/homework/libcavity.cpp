@@ -58,14 +58,10 @@ public:
     }
 
     Matrix(uint32_t num_row, uint32_t num_col)
-      : num_col(num_col), num_row(num_row), elems((T*)malloc(num_row * num_col * sizeof(T))) {}
-
-    Matrix(uint32_t num_row, uint32_t num_col, T init_val)
       : num_col(num_col), num_row(num_row), elems((T*)malloc(num_row * num_col * sizeof(T)))
     {
-        memset(elems, init_val, num_row * num_col * sizeof(T));
+        memset(elems, 0, num_row * num_col * sizeof(T));
     }
-
 
     inline T &operator()(uint32_t row, uint32_t col) {
         return elems[col + row * num_col];
@@ -93,7 +89,6 @@ public:
     }
 
     inline void fill_row(uint32_t row, uint32_t val) {
-        // memset(&elems[row * num_col], val, num_col * sizeof(T));
         REP(c, 0, num_col) {
             (*this)(row, c) = val;
         }
@@ -129,10 +124,10 @@ class Simulator {
 public:
     Simulator(Config c) :
         c(c),
-        u(Matrix<double>(c.nx, c.ny, 0)),
-        v(Matrix<double>(c.nx, c.ny, 0)),
-        p(Matrix<double>(c.nx, c.ny, 0)),
-        b(Matrix<double>(c.nx, c.ny, 0)),
+        u(Matrix<double>(c.nx, c.ny)),
+        v(Matrix<double>(c.nx, c.ny)),
+        p(Matrix<double>(c.nx, c.ny)),
+        b(Matrix<double>(c.nx, c.ny)),
         current_step(0)
     {}
 
@@ -167,10 +162,10 @@ public:
                                  / (2 * (sq(c.dx) + sq(c.dy)));
                 }
             }
-            p.copy_col(c.nx - 1, c.nx - 2); // p[:, -1] = p[:, -2]
-            p.copy_col(0, 1); // p[:, 0] = p[:, 1]
-            p.copy_row(0, 1); // p[0, :] = p[1, :]
-            p.fill_row(c.ny - 1, 0); // p[-1, :] = 0
+            p.copy_col(c.nx - 1, c.nx - 2);
+            p.copy_col(0, 1);
+            p.copy_row(0, 1);
+            p.fill_row(c.ny - 1, 0);
         }
 
         un = u;
@@ -192,15 +187,15 @@ public:
             }
         }
 
-        u.fill_row(0, 0); // u[0, :]  = 0
-        u.fill_row(c.ny - 1, 1); // u[-1, :] = 1
-        v.fill_row(0, 0);// v[0, :]  = 0
-        v.fill_row(c.ny - 1, 0);// v[-1, :] = 0
+        u.fill_row(0, 0);
+        u.fill_row(c.ny - 1, 1);
+        v.fill_row(0, 0);
+        v.fill_row(c.ny - 1, 0);
 
-        u.fill_col(0, 0); // u[:, 0]  = 0
-        u.fill_col(c.nx - 1, 0); // u[:, -1] = 0
-        v.fill_col(0, 0); // v[:, 0]  = 0
-        v.fill_row(c.nx - 1, 0); // v[:, -1] = 0
+        u.fill_col(0, 0);
+        u.fill_col(c.nx - 1, 0);
+        v.fill_col(0, 0);
+        v.fill_row(c.nx - 1, 0);
 
         ++current_step;
     }
