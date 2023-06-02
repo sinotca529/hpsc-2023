@@ -200,8 +200,8 @@ public:
 
         v.fill_row(0, 0);
         v.fill_row(c.ny - 1, 0);
-        v.fill_row(c.nx - 1, 0);
         v.fill_col(0, 0);
+        v.fill_col(c.nx - 1, 0);
 
         ++current_step;
     }
