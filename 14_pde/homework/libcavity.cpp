@@ -8,15 +8,15 @@
 #define REP(i, start, end) for (uint32_t i = start; i < end; ++i)
 
 struct Config {
-    uint32_t nx;
-    uint32_t ny;
-    uint32_t nt;
-    uint32_t nit;
-    double dx;
-    double dy;
-    double dt;
-    double rho;
-    double nu;
+    uint32_t const nx;
+    uint32_t const ny;
+    uint32_t const nt;
+    uint32_t const nit;
+    double const dx;
+    double const dy;
+    double const dt;
+    double const rho;
+    double const nu;
 
     Config(
         uint32_t nx,
@@ -41,7 +41,7 @@ struct Config {
 
 template<typename T>
 class Matrix {
-    T *elems; // [row0, row1, ...]
+    T * const elems; // [row0, row1, ...]
     uint32_t const num_row;
     uint32_t const num_col;
 public:
