@@ -72,6 +72,7 @@ public:
     }
 
     inline void copy_col(uint32_t to, uint32_t from) {
+        #pragma omp parallel for schedule(static)
         REP(r, 0, num_row) {
             (*this)(r, to) = (*this)(r, from);
         }
@@ -83,12 +84,14 @@ public:
 
 
     inline void fill_col(uint32_t col, uint32_t val) {
+        #pragma omp parallel for schedule(static)
         REP(r, 0, num_row) {
             (*this)(r, col) = val;
         }
     }
 
     inline void fill_row(uint32_t row, uint32_t val) {
+        #pragma omp parallel for schedule(static)
         REP(c, 0, num_col) {
             (*this)(row, c) = val;
         }
@@ -143,6 +146,7 @@ public:
 
         if (current_step >= c.nt) return;
 
+        #pragma omp parallel for schedule(static)
         REP(j, 1, c.ny - 1) {
             REP(i, 1, c.nx - 1) {
                 b(j, i) = c.rho * (1 / c.dt *
@@ -154,6 +158,7 @@ public:
 
         REP(it, 0, c.nit) {
             pn = p;
+            #pragma omp parallel for schedule(static)
             REP(j, 1, c.ny - 1) {
                 REP(i, 1, c.nx - 1) {
                     p(j, i) = (sq(c.dy) * (pn(j, i+1) + pn(j, i-1)) +
@@ -171,6 +176,7 @@ public:
         un = u;
         vn = v;
 
+        #pragma omp parallel for schedule(static)
         REP(j, 1, c.ny - 1) {
             REP(i, 1, c.nx - 1) {
                 u(j, i) = un(j, i) - un(j, i) * c.dt / c.dx * (un(j, i) - un(j, i - 1))
@@ -189,13 +195,13 @@ public:
 
         u.fill_row(0, 0);
         u.fill_row(c.ny - 1, 1);
-        v.fill_row(0, 0);
-        v.fill_row(c.ny - 1, 0);
-
         u.fill_col(0, 0);
         u.fill_col(c.nx - 1, 0);
-        v.fill_col(0, 0);
+
+        v.fill_row(0, 0);
+        v.fill_row(c.ny - 1, 0);
         v.fill_row(c.nx - 1, 0);
+        v.fill_col(0, 0);
 
         ++current_step;
     }
