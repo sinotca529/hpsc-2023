@@ -45,7 +45,7 @@ int main() {
       {
         int mask[STRIDE] = {};
         int first_invalid_idx = std::min(N - j, STRIDE);
-        memset(mask, -1, first_invalid_idx * sizeof(float));
+        memset(mask, -1, first_invalid_idx * sizeof(int));
         load_mask = _mm256_load_si256((__m256i*)mask);
       }
 
