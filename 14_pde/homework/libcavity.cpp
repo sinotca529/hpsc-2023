@@ -51,6 +51,7 @@ public:
     Matrix &operator=(Matrix const &m) {
         assert(num_row == m.num_row);
         assert(num_col == m.num_col);
+        // SIMD may be used internaly.
         memcpy(elems, m.elems, num_row * num_col * sizeof(T));
         return *this;
     }
@@ -59,9 +60,11 @@ public:
         free(elems);
     }
 
-    Matrix(uint32_t num_row, uint32_t num_col)
+    Matrix(uint32_t num_row, uint32_t num_col, bool fill_zero_flag)
       : num_col(num_col), num_row(num_row), elems((T*)malloc(num_row * num_col * sizeof(T)))
     {
+        if (!fill_zero_flag) return;
+        // SIMD may be used internaly.
         memset(elems, 0, num_row * num_col * sizeof(T));
     }
 
@@ -81,6 +84,7 @@ public:
     }
 
     inline void copy_row(uint32_t to, uint32_t from) {
+        // SIMD may be used internaly.
         memcpy(&elems[to * num_col], &elems[from * num_col], num_col * sizeof(T));
     }
 
@@ -141,10 +145,10 @@ class Simulator {
 public:
     Simulator(Config c) :
         c(c),
-        u(Matrix<double>(c.nx, c.ny)),
-        v(Matrix<double>(c.nx, c.ny)),
-        p(Matrix<double>(c.nx, c.ny)),
-        b(Matrix<double>(c.nx, c.ny)),
+        u(Matrix<double>(c.nx, c.ny, true)),
+        v(Matrix<double>(c.nx, c.ny, true)),
+        p(Matrix<double>(c.nx, c.ny, true)),
+        b(Matrix<double>(c.nx, c.ny, true)),
         current_step(0)
     {}
 
@@ -154,9 +158,9 @@ public:
 
     void update() {
         // リアロケートのコストをなくすため static を使う。
-        static Matrix<double> pn(c.nx, c.ny);
-        static Matrix<double> un(c.nx, c.ny);
-        static Matrix<double> vn(c.nx, c.ny);
+        static Matrix<double> pn(c.nx, c.ny, false);
+        static Matrix<double> un(c.nx, c.ny, false);
+        static Matrix<double> vn(c.nx, c.ny, false);
 
         if (current_step >= c.nt) return;
 
