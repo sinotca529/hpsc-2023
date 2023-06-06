@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import ctypes
+import time
 
 lib = ctypes.cdll.LoadLibrary('./libcavity.so')
 
@@ -63,7 +64,11 @@ X, Y = np.meshgrid(x, y)
 simu = Simulator(conf)
 
 for n in range(conf.nt):
+    start = time.time()
     simu.update()
+    end = time.time()
+    print(f'step {n:0>3} : took {end - start} s')
+
     u = simu.get_u()
     v = simu.get_v()
     p = simu.get_p()

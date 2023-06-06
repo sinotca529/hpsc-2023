@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
+#include <omp.h>
+#include <immintrin.h>
 
 #define REP(i, start, end) for (uint32_t i = start; i < end; ++i)
 
@@ -82,15 +84,14 @@ public:
         memcpy(&elems[to * num_col], &elems[from * num_col], num_col * sizeof(T));
     }
 
-
-    inline void fill_col(uint32_t col, uint32_t val) {
+    inline void fill_col(uint32_t col, T val) {
         #pragma omp parallel for schedule(static)
         REP(r, 0, num_row) {
             (*this)(r, col) = val;
         }
     }
 
-    inline void fill_row(uint32_t row, uint32_t val) {
+    inline void fill_row(uint32_t row, T val) {
         #pragma omp parallel for schedule(static)
         REP(c, 0, num_col) {
             (*this)(row, c) = val;
@@ -111,6 +112,21 @@ public:
         return o;
     }
 };
+
+template<>
+inline void Matrix<double>::fill_row(uint32_t row, double val) {
+    uint32_t const STROK = (256 / 8) / sizeof(double);
+    __m256d vals = _mm256_set1_pd(val);
+
+    auto *row_begin = &elems[num_col * row];
+    int i = 0;
+    for (; i + STROK - 1 < num_col ; i += STROK) {
+        _mm256_storeu_pd(row_begin + i, vals);
+    }
+    for (; i < num_col; ++i) {
+        (*this)(row, i) = val;
+    }
+}
 
 inline static double sq(double a) {
     return a * a;
@@ -193,15 +209,31 @@ public:
             }
         }
 
-        u.fill_col(0, 0);
-        u.fill_col(c.nx - 1, 0);
-        u.fill_row(0, 0);
-        u.fill_row(c.ny - 1, 1);
+        #pragma omp parallel
+        {
+            #pragma omp sections
+            {
+                #pragma omp section
+                { v.fill_col(0, 0); }
+                #pragma omp section
+                { v.fill_col(c.nx - 1, 0); }
+                #pragma omp section
+                { v.fill_row(0, 0); }
+                #pragma omp section
+                { v.fill_row(c.ny - 1, 0); }
 
-        v.fill_col(0, 0);
-        v.fill_col(c.nx - 1, 0);
-        v.fill_row(0, 0);
-        v.fill_row(c.ny - 1, 0);
+                #pragma omp section
+                { u.fill_col(0, 0); }
+                #pragma omp section
+                { u.fill_col(c.nx - 1, 0); }
+                #pragma omp section
+                { u.fill_row(0, 0); }
+                #pragma omp section
+                { u.fill_row(c.ny - 1, 1); }
+            }
+        }
+        u(c.ny - 1, 0) = 1;
+        u(c.ny - 1, c.nx - 1) = 1;
 
         ++current_step;
     }
