@@ -118,14 +118,12 @@ inline void Matrix<double>::fill_row(uint32_t row, double val) {
     uint32_t const STROK = (256 / 8) / sizeof(double);
     __m256d vals = _mm256_set1_pd(val);
 
+    auto num_iter = num_col / STROK;
     auto *row_begin = &elems[num_col * row];
-    int i = 0;
-    for (; i + STROK - 1 < num_col ; i += STROK) {
-        _mm256_storeu_pd(row_begin + i, vals);
+    for (int i = 0; i < num_col / STROK; ++i) {
+        _mm256_storeu_pd(row_begin + i * STROK, vals);
     }
-    for (; i < num_col; ++i) {
-        (*this)(row, i) = val;
-    }
+    _mm256_storeu_pd(row_begin + num_col - STROK, vals);
 }
 
 inline static double sq(double a) {

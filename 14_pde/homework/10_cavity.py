@@ -63,10 +63,12 @@ X, Y = np.meshgrid(x, y)
 
 simu = Simulator(conf)
 
+sum_time = 0.0
 for n in range(conf.nt):
     start = time.time()
     simu.update()
     end = time.time()
+    sum_time += end - start
     print(f'step {n:0>3} : took {end - start} s')
 
     u = simu.get_u()
@@ -78,3 +80,5 @@ for n in range(conf.nt):
     plt.pause(.01)
     plt.clf()
 plt.show()
+
+print(f'time per step : {sum_time / n}')
